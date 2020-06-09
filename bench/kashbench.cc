@@ -8,6 +8,7 @@
 #include <functional>
 #include <random>
 #include <vector>
+#include <ctime>
 
 #include <xnnpack.h>
 
@@ -16,6 +17,9 @@
 
 int main(int argc, char** argv) {
   printf("We are going to run a test of KashNet now...\n");
+
+  time_t start_time = time(nullptr);
+
   if (xnn_initialize(nullptr /* allocator */) != xnn_status_success) {
     fprintf(stderr, "Failed to initialize XNNPACK");
     return 701;
@@ -38,6 +42,9 @@ int main(int argc, char** argv) {
       return 703;
     }
   }
-  printf("Run complete!\n");
+
+  time_t end_time = time(nullptr);
+
+  printf("Run complete! - Execution took %ld seconds\n", end_time - start_time);
   return 0;
 }
