@@ -16,11 +16,11 @@
 
 
 int main(int argc, char** argv) {
-  printf("We are going to run a test of KashNet now...\n");
+  printf("\nWe are going to run a test of KashNet now...\n");
 
   auto start_time = std::chrono::high_resolution_clock::now();
 
-  if (xnn_initialize(nullptr /* allocator */) != xnn_status_success) {
+  if (xnn_initialize(nullptr) != xnn_status_success) {
     fprintf(stderr, "Failed to initialize XNNPACK");
     return 701;
   }
@@ -41,6 +41,11 @@ int main(int argc, char** argv) {
       fprintf(stderr, "failed to run a model");
       return 703;
     }
+  }
+
+  if (xnn_deinitialize() != xnn_status_success) {
+    fprintf(stderr, "Failed to deinitialize XNNPACK");
+    return 704;
   }
 
   auto end_time = std::chrono::high_resolution_clock::now();
