@@ -6,8 +6,3 @@
 #pragma once
 
 #include "models/models.h"
-#include <benchmark/benchmark.h>
-
-
-#define BENCHMARK_KASH(benchmark_fn) \
-  BENCHMARK_CAPTURE(benchmark_fn, kashnet, models::KashNet)->Unit(benchmark::kMicrosecond)->UseRealTime();
