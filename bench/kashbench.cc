@@ -8,7 +8,7 @@
 #include <functional>
 #include <random>
 #include <vector>
-#include <ctime>
+#include <chrono>
 
 #include <xnnpack.h>
 
@@ -18,7 +18,7 @@
 int main(int argc, char** argv) {
   printf("We are going to run a test of KashNet now...\n");
 
-  time_t start_time = time(nullptr);
+  auto start_time = std::chrono::high_resolution_clock::now();
 
   if (xnn_initialize(nullptr /* allocator */) != xnn_status_success) {
     fprintf(stderr, "Failed to initialize XNNPACK");
@@ -43,8 +43,10 @@ int main(int argc, char** argv) {
     }
   }
 
-  time_t end_time = time(nullptr);
+  auto end_time = std::chrono::high_resolution_clock::now();
 
-  printf("Run complete! - Execution took %ld seconds\n", end_time - start_time);
+  auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+
+  printf("Run complete! - Execution took %lld milliseconds\n\n", milliseconds.count());
   return 0;
 }
