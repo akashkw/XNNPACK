@@ -19,6 +19,10 @@
 int main(int argc, char** argv) {
   printf("\nWe are going to run a test of KashNet now...\n");
 
+  // ------------------------ EAGER ---------------------------
+
+  printf("This is a test of the Eager API...\n");
+
   const size_t num_threads = 8;
   std::unique_ptr<pthreadpool, decltype(&pthreadpool_destroy)> threadpool(
     pthreadpool_create(num_threads), pthreadpool_destroy);
@@ -41,6 +45,8 @@ int main(int argc, char** argv) {
     fprintf(stderr, "Failed to initialize XNNPACK");
     return 701;
   }
+
+  auto start_time = std::chrono::high_resolution_clock::now();
 
   xnn_operator_t op9 = nullptr;
   status = xnn_create_add_nd_f32(
@@ -68,9 +74,6 @@ int main(int argc, char** argv) {
     return 699;
   }
 
-  auto start_time = std::chrono::high_resolution_clock::now();
-
-
   if (execution_plan.empty()) {
     fprintf(stderr, "failed to create a model");
     return 702;
@@ -84,20 +87,109 @@ int main(int argc, char** argv) {
     }
   }
 
+  auto end_time = std::chrono::high_resolution_clock::now();
+
   if (xnn_deinitialize() != xnn_status_success) {
     fprintf(stderr, "Failed to deinitialize XNNPACK");
     return 704;
   }
 
-  auto end_time = std::chrono::high_resolution_clock::now();
-
   auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
 
   printf("Run complete! - Execution took %lld milliseconds\n\n", milliseconds.count());
 
-  for(size_t i = 0; i < 3; ++i) {
+  for(size_t i = 0; i < 75264; ++i) {
     printf("%d ", (int)v10[i]);
   }
+  printf("\n");
+
+  // ------------------------ GRAPH ---------------------------
+
+  printf("This is a test of the Graph API...\n");
+
+  for(size_t i = 0; i < 75264; ++i) {
+    v9[i] = 4;
+    v6[i] = 2;
+    v10[i] = 0;
+  }
+
+  if (xnn_initialize(nullptr) != xnn_status_success) {
+    fprintf(stderr, "Failed to initialize XNNPACK");
+    return 701;
+  }
+
+  start_time = std::chrono::high_resolution_clock::now();
+  
+  xnn_subgraph_t adder_subgraph;
+
+  if (xnn_create_subgraph(60, 0, &adder_subgraph) != xnn_status_success) {
+    fprintf(stderr, "Failed to create XNNPACK subgraph");
+    return 801;
+  }
+
+  const size_t v9_shape[] = { 1, 56, 56, 24 };
+  uint32_t v9_id;
+  if (xnn_define_tensor_value(adder_subgraph, xnn_datatype_fp32, 4, v9_shape, v9, XNN_INVALID_VALUE_ID, 0, &v9_id) != xnn_status_success) {
+    fprintf(stderr, "Failed to define subgraph tensor");
+    return 802;
+  }
+
+  const size_t v6_shape[] = { 1, 56, 56, 24 };
+  uint32_t v6_id;
+  if (xnn_define_tensor_value(adder_subgraph, xnn_datatype_fp32, 4, v6_shape, v6, XNN_INVALID_VALUE_ID, 0, &v6_id) != xnn_status_success) {
+    fprintf(stderr, "Failed to define subgraph tensor");
+    return 802;
+  }
+
+  const size_t v10_shape[] = { 1, 56, 56, 24 };
+  xnn_external_value v10_ex_id = {2, (void*)v10};
+  if (xnn_define_tensor_value(adder_subgraph, xnn_datatype_fp32, 4, v10_shape, v10, v10_ex_id.id, XNN_VALUE_FLAG_EXTERNAL_OUTPUT, nullptr) != xnn_status_success) {
+    fprintf(stderr, "Failed to define subgraph tensor");
+    return 802;
+  }
+
+  if (xnn_define_add2(adder_subgraph, -1000, 1000, v9_id, v6_id, v10_ex_id.id, 0) != xnn_status_success) {
+    fprintf(stderr, "Failed to define subgraph add");
+    return 803;
+  }
+
+  xnn_runtime_t adder_runtime;
+
+  if (xnn_create_runtime(adder_subgraph, &adder_runtime) != xnn_status_success) {
+    fprintf(stderr, "Failed to define subgraph runtime");
+    return 804;
+  }
+
+  if (xnn_setup_runtime(adder_runtime, 1, &v10_ex_id) != xnn_status_success) {
+    fprintf(stderr, "Failed to setup subgraph runtime");
+    return 805;
+  }
+
+  if (xnn_invoke_runtime(adder_runtime) != xnn_status_success) {
+    fprintf(stderr, "Failed to invoke subgraph runtime");
+    return 806;
+  }
+
+  if (xnn_delete_runtime(adder_runtime) != xnn_status_success) {
+    fprintf(stderr, "Failed to delete subgraph runtime");
+    return 807;
+  }
+
+  end_time = std::chrono::high_resolution_clock::now();
+
+  if (xnn_deinitialize() != xnn_status_success) {
+    fprintf(stderr, "Failed to deinitialize XNNPACK");
+    return 704;
+  }
+
+  milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+
+  printf("Run complete! - Execution took %lld milliseconds\n\n", milliseconds.count());
+
+  for(size_t i = 0; i < 75264; ++i) {
+    printf("%d ", (int)v10[i]);
+  }
+  printf("\n");
 
   return 0;
 }
