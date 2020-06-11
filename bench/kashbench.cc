@@ -94,14 +94,15 @@ int main(int argc, char** argv) {
     return 704;
   }
 
-  auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+  auto nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time);
 
-  printf("Run complete! - Execution took %lld milliseconds\n\n", milliseconds.count());
+  printf("Run complete! - Execution took %lld nanoseconds\n", nanoseconds.count());
 
-  for(size_t i = 0; i < 75264; ++i) {
+  printf("First three values of output are :: ");
+  for(size_t i = 0; i < 3; ++i) {
     printf("%d ", (int)v10[i]);
   }
-  printf("\n");
+  printf("\n\n");
 
   // ------------------------ GRAPH ---------------------------
 
@@ -122,11 +123,11 @@ int main(int argc, char** argv) {
   
   xnn_subgraph_t adder_subgraph;
 
-  if (xnn_create_subgraph(60, 0, &adder_subgraph) != xnn_status_success) {
+  if (xnn_create_subgraph(10, 0, &adder_subgraph) != xnn_status_success) {
     fprintf(stderr, "Failed to create XNNPACK subgraph");
     return 801;
   }
-
+  
   const size_t v9_shape[] = { 1, 56, 56, 24 };
   uint32_t v9_id;
   if (xnn_define_tensor_value(adder_subgraph, xnn_datatype_fp32, 4, v9_shape, v9, XNN_INVALID_VALUE_ID, 0, &v9_id) != xnn_status_success) {
@@ -141,14 +142,15 @@ int main(int argc, char** argv) {
     return 802;
   }
 
+  xnn_external_value v10_ex_id = {0, v10};
   const size_t v10_shape[] = { 1, 56, 56, 24 };
-  xnn_external_value v10_ex_id = {2, (void*)v10};
-  if (xnn_define_tensor_value(adder_subgraph, xnn_datatype_fp32, 4, v10_shape, v10, v10_ex_id.id, XNN_VALUE_FLAG_EXTERNAL_OUTPUT, nullptr) != xnn_status_success) {
+  uint32_t v10_id;
+  if (xnn_define_tensor_value(adder_subgraph, xnn_datatype_fp32, 4, v10_shape, nullptr, v10_ex_id.id, XNN_VALUE_FLAG_EXTERNAL_OUTPUT, &v10_id) != xnn_status_success) {
     fprintf(stderr, "Failed to define subgraph tensor");
     return 802;
   }
 
-  if (xnn_define_add2(adder_subgraph, -1000, 1000, v9_id, v6_id, v10_ex_id.id, 0) != xnn_status_success) {
+  if (xnn_define_add2(adder_subgraph, -1000, 1000, v9_id, v6_id, v10_id, 0) != xnn_status_success) {
     fprintf(stderr, "Failed to define subgraph add");
     return 803;
   }
@@ -182,14 +184,15 @@ int main(int argc, char** argv) {
     return 704;
   }
 
-  milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+  nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time);
 
-  printf("Run complete! - Execution took %lld milliseconds\n\n", milliseconds.count());
+  printf("Run complete! - Execution took %lld nanoseconds\n", nanoseconds.count());
 
-  for(size_t i = 0; i < 75264; ++i) {
+  printf("First three values of output are :: ");
+  for(size_t i = 0; i < 3; ++i) {
     printf("%d ", (int)v10[i]);
   }
-  printf("\n");
+  printf("\n\n");
 
   return 0;
 }
